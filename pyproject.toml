@@ -37,6 +37,7 @@ known-first-party = ["zen_tools"]
 
 [tool.ruff.lint.per-file-ignores]
 "src/zen_tools/docs.py" = ["E501"]
+"src/zen_tools/tools/__init__.py" = ["E501"]
 
 [tool.ty]
 python-version = "3.12"

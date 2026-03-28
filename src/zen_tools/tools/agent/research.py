@@ -1,12 +1,9 @@
-from __future__ import annotations
-
-import asyncio
 import json
 from typing import Annotated, Literal
 
-from pydantic import Field
+from firecrawl.v2.types import AgentResponse
 
-from zen_tools.tools._firecrawl import client
+from zen_tools.clients.firecrawl import client
 
 EXAMPLES = """\
 { "operation": "research", "prompt": "Find the top 5 AI startups and their funding amounts" }
@@ -20,25 +17,17 @@ EXAMPLES = """\
 async def agent_research(
     operation: Annotated[
         Literal["research", "extract"],
-        Field(
-            description="research=free-form prose answer, extract=structured JSON matching schema"
-        ),
+        "research=free-form prose answer, extract=structured JSON matching schema",
     ],
-    prompt: Annotated[
-        str,
-        Field(description="What data to find — describe the target information clearly"),
-    ],
+    prompt: Annotated[str, "What data to find — describe the target information clearly"],
     urls: Annotated[
-        str | None,
-        Field(description="Comma-separated URLs to restrict research to specific pages"),
+        str | None, "Comma-separated URLs to restrict research to specific pages"
     ] = None,
     schema: Annotated[
-        str | None,
-        Field(description="JSON schema string for structured output — required for extract"),
+        str | None, "JSON schema string for structured output — required for extract"
     ] = None,
     model: Annotated[
-        Literal["mini", "pro"],
-        Field(description="mini=default (faster, cheaper), pro=higher accuracy for complex tasks"),
+        Literal["mini", "pro"], "mini=default (faster, cheaper), pro=higher accuracy"
     ] = "mini",
 ) -> str:
     """Autonomous AI agent that reasons across the web.
@@ -46,16 +35,13 @@ async def agent_research(
     or returning structured data. research=prose answer, extract=JSON matching your schema."""
     url_list = [u.strip() for u in urls.split(",") if u.strip()] if urls else None
     parsed_schema: dict | None = json.loads(schema) if schema else None
-    model_id = "spark-1-pro" if model == "pro" else "spark-1-mini"
 
-    kwargs: dict = {"prompt": prompt, "model": model_id}
-    if url_list:
-        kwargs["urls"] = url_list
-    if parsed_schema:
-        kwargs["schema"] = parsed_schema
-
-    result = await asyncio.to_thread(client().agent, **kwargs)
-    data = getattr(result, "data", None)
-    if operation == "extract" or not isinstance(data, str):
-        return json.dumps(data, indent=2)
-    return data or "No data returned."
+    result: AgentResponse = await client().agent(
+        urls=url_list,
+        prompt=prompt,
+        schema=parsed_schema,
+        model="spark-1-pro" if model == "pro" else "spark-1-mini",
+    )
+    if operation == "extract" or not isinstance(result.data, str):
+        return json.dumps(result.data, indent=2)
+    return result.data or "No data returned."

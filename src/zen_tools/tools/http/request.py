@@ -1,10 +1,7 @@
-from __future__ import annotations
-
 import json
 from typing import Annotated, Literal
 
 import httpx
-from pydantic import Field
 
 EXAMPLES = """\
 { "operation": "get", "url": "https://api.example.com/users" }
@@ -14,23 +11,11 @@ EXAMPLES = """\
 
 
 async def http_request(
-    operation: Annotated[
-        Literal["get", "post", "put", "patch", "delete"],
-        Field(description="HTTP method"),
-    ],
-    url: Annotated[str, Field(description="Full URL including protocol")],
-    headers: Annotated[
-        dict[str, str] | None,
-        Field(description="Request headers as key-value pairs"),
-    ] = None,
-    body: Annotated[
-        str | None,
-        Field(description="Request body string — use with post, put, patch"),
-    ] = None,
-    query: Annotated[
-        dict[str, str] | None,
-        Field(description="URL query params as key-value pairs"),
-    ] = None,
+    operation: Annotated[Literal["get", "post", "put", "patch", "delete"], "HTTP method"],
+    url: Annotated[str, "Full URL including protocol"],
+    headers: Annotated[dict[str, str] | None, "Request headers as key-value pairs"] = None,
+    body: Annotated[str | None, "Request body — use with post, put, patch"] = None,
+    query: Annotated[dict[str, str] | None, "URL query params as key-value pairs"] = None,
 ) -> str:
     """Call REST APIs. Use this over web_fetch when you need custom headers, auth tokens,
     query params, or a request body. Auto-parses JSON responses."""

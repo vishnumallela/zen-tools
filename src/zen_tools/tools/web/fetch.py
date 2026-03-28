@@ -1,11 +1,8 @@
-from __future__ import annotations
-
-import asyncio
 from typing import Annotated, Literal
 
-from pydantic import Field
+from firecrawl.v2.types import Document, PDFParser
 
-from zen_tools.tools._firecrawl import client
+from zen_tools.clients.firecrawl import client
 
 EXAMPLES = """\
 { "url": "https://example.com/docs" }
@@ -14,16 +11,14 @@ EXAMPLES = """\
 
 
 async def web_fetch(
-    url: Annotated[str, Field(description="URL to fetch")],
+    url: Annotated[str, "URL to fetch"],
     pdf_mode: Annotated[
         Literal["auto", "fast", "ocr"] | None,
-        Field(description="PDF parse mode — auto=default, fast=text-only, ocr=force OCR"),
+        "PDF parse mode — auto=default, fast=text-only, ocr=force OCR",
     ] = None,
 ) -> str:
     """Fetch a single URL and return its content as markdown.
     Use when you already have a URL. Supports web pages and documents (PDF, Excel, Word)."""
-    params: dict = {"formats": ["markdown"]}
-    if pdf_mode:
-        params["parsers"] = [{"type": "pdf", "mode": pdf_mode}]
-    result = await asyncio.to_thread(client().scrape_url, url, **params)
-    return getattr(result, "markdown", "") or ""
+    parsers = [PDFParser(mode=pdf_mode)] if pdf_mode else None
+    result: Document = await client().scrape(url, formats=["markdown"], parsers=parsers)
+    return result.markdown or ""

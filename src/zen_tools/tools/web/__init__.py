@@ -1,14 +1,14 @@
 from fastmcp.tools.tool import ToolAnnotations
 
-from zen_tools.tools import NamespaceInfo, register_namespace, register_tool
+from zen_tools.tools._types import ToolDef
 from zen_tools.tools.web import crawl, fetch, map_, search
 
-_NS = "web"
+DESCRIPTION = "Fetch and search web content."
 _ann = ToolAnnotations(readOnlyHint=True, openWorldHint=True)
 
-register_namespace(NamespaceInfo(name=_NS, description="Fetch and search web content."))
-
-register_tool(search.web_search, _NS, examples=search.EXAMPLES, annotations=_ann)
-register_tool(fetch.web_fetch, _NS, examples=fetch.EXAMPLES, annotations=_ann)
-register_tool(crawl.web_crawl, _NS, examples=crawl.EXAMPLES, annotations=_ann)
-register_tool(map_.web_map, _NS, examples=map_.EXAMPLES, annotations=_ann)
+TOOLS: list[ToolDef] = [
+    ToolDef(fn=search.web_search, namespace="web", examples=search.EXAMPLES, annotations=_ann),
+    ToolDef(fn=fetch.web_fetch, namespace="web", examples=fetch.EXAMPLES, annotations=_ann),
+    ToolDef(fn=crawl.web_crawl, namespace="web", examples=crawl.EXAMPLES, annotations=_ann),
+    ToolDef(fn=map_.web_map, namespace="web", examples=map_.EXAMPLES, annotations=_ann),
+]

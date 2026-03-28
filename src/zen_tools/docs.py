@@ -1,19 +1,19 @@
-from __future__ import annotations
-
 import inspect
 from typing import Annotated, get_args, get_origin, get_type_hints
 
 from pydantic.fields import FieldInfo
 
-from zen_tools.tools import ALL_TOOLS, NAMESPACES, ToolDef
+from zen_tools.tools import ALL_TOOLS, NAMESPACE_DESCRIPTIONS, ToolDef
 
 
-def _field_info(annotation: object) -> FieldInfo | None:
+def _param_description(annotation: object) -> str:
     if get_origin(annotation) is Annotated:
         for arg in get_args(annotation)[1:]:
-            if isinstance(arg, FieldInfo):
+            if isinstance(arg, str):
                 return arg
-    return None
+            if isinstance(arg, FieldInfo) and arg.description:
+                return arg.description
+    return ""
 
 
 def _type_label(annotation: object) -> str:
@@ -61,10 +61,9 @@ def _render_tool(td: ToolDef) -> str:
         if pname in ("ctx", "self", "return"):
             continue
         annotation = hints.get(pname, inspect.Parameter.empty)
-        fi = _field_info(annotation)
         required = param.default is inspect.Parameter.empty
         ptype = _html(_type_label(annotation))
-        pdesc = _html(fi.description or "") if fi and fi.description else ""
+        pdesc = _html(_param_description(annotation))
         req_badge = '<span class="pr">*</span>' if required else ""
         rows += f"""
         <tr>
@@ -99,22 +98,22 @@ def _render_tool(td: ToolDef) -> str:
 
 def generate_docs_html() -> str:
     ns_map: dict[str, list[ToolDef]] = {}
-    for td in ALL_TOOLS.values():
+    for td in ALL_TOOLS:
         ns_map.setdefault(td.namespace, []).append(td)
 
     nav_links = ""
-    for ns in NAMESPACES:
-        nav_links += f'\n  <a href="#{ns.name}" class="ns">{ns.name}/</a>'
-        for td in ns_map.get(ns.name, []):
+    for ns_name in NAMESPACE_DESCRIPTIONS:
+        nav_links += f'\n  <a href="#{ns_name}" class="ns">{ns_name}/</a>'
+        for td in ns_map.get(ns_name, []):
             tool_id = f"tool-{td.name.replace('_', '-')}"
             nav_links += f'\n  <a href="#{tool_id}" class="sub">{td.name}</a>'
 
     ns_sections = ""
-    for ns in NAMESPACES:
-        tools_html = "\n".join(_render_tool(td) for td in ns_map.get(ns.name, []))
+    for ns_name, ns_desc in NAMESPACE_DESCRIPTIONS.items():
+        tools_html = "\n".join(_render_tool(td) for td in ns_map.get(ns_name, []))
         ns_sections += f"""
-  <h2 id="{ns.name}" class="ns">{ns.name}/</h2>
-  <p class="domain-desc">{_html(ns.description)}</p>
+  <h2 id="{ns_name}" class="ns">{ns_name}/</h2>
+  <p class="domain-desc">{_html(ns_desc)}</p>
 {tools_html}"""
 
     return f"""<!DOCTYPE html>
