@@ -11,14 +11,16 @@ EXAMPLES = """\
 
 
 async def http_request(
-    operation: Annotated[Literal["get", "post", "put", "patch", "delete"], "HTTP method"],
-    url: Annotated[str, "Full URL including protocol"],
-    headers: Annotated[dict[str, str] | None, "Request headers as key-value pairs"] = None,
-    body: Annotated[str | None, "Request body — use with post, put, patch"] = None,
-    query: Annotated[dict[str, str] | None, "URL query params as key-value pairs"] = None,
+    operation: Annotated[Literal["get", "post", "put", "patch", "delete"], "HTTP method."],
+    url: Annotated[str, "Full URL including protocol."],
+    headers: Annotated[dict[str, str] | None, "Request headers as key-value pairs."] = None,
+    body: Annotated[str | None, "Request body string. Use with post, put, and patch."] = None,
+    query: Annotated[dict[str, str] | None, "URL query parameters as key-value pairs."] = None,
 ) -> str:
-    """Call REST APIs. Use this over web_fetch when you need custom headers, auth tokens,
-    query params, or a request body. Auto-parses JSON responses."""
+    """Make an HTTP request to a REST API endpoint and return the response.
+    Returns: status line followed by the response body. JSON responses are pretty-printed, all others as plain text.
+    Use when the target requires a specific HTTP method, custom headers, auth tokens, or a request body.
+    Not for reading web pages or documents. Use web_fetch instead."""
     async with httpx.AsyncClient() as client:
         resp = await client.request(
             method=operation.upper(),

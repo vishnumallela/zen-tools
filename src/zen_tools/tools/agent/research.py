@@ -1,8 +1,6 @@
 import json
 from typing import Annotated, Literal
 
-from firecrawl.v2.types import AgentResponse
-
 from zen_tools.clients.firecrawl import client
 
 EXAMPLES = """\
@@ -17,26 +15,29 @@ EXAMPLES = """\
 async def agent_research(
     operation: Annotated[
         Literal["research", "extract"],
-        "research=free-form prose answer, extract=structured JSON matching schema",
+        "Output mode. research=prose answer, extract=structured JSON matching the provided schema.",
     ],
-    prompt: Annotated[str, "What data to find — describe the target information clearly"],
+    prompt: Annotated[str, "What to find or extract. Describe the target information clearly."],
     urls: Annotated[
-        str | None, "Comma-separated URLs to restrict research to specific pages"
+        str | None, "Comma-separated URLs to restrict the agent to specific pages. Omit to search the open web."
     ] = None,
     schema: Annotated[
-        str | None, "JSON schema string for structured output — required for extract"
+        str | None, "JSON schema string describing the output shape. Required when operation is extract."
     ] = None,
     model: Annotated[
-        Literal["mini", "pro"], "mini=default (faster, cheaper), pro=higher accuracy"
+        Literal["mini", "pro"], "Model to use. mini=faster and cheaper, pro=higher accuracy. Default is mini."
     ] = "mini",
 ) -> str:
-    """Autonomous AI agent that reasons across the web.
-    Use over web_search when the answer requires visiting multiple pages, comparing sources,
-    or returning structured data. research=prose answer, extract=JSON matching your schema."""
+    """Deploy an AI agent to autonomously browse the web, reason across multiple pages, and return a synthesized answer.
+    Returns: prose markdown when operation is research, or a JSON object matching your schema when operation is extract.
+    Use when the task requires visiting multiple sources, comparing information, or extracting structured data from the web.
+    Not for fetching a single known URL. Use web_fetch instead.
+    Not for keyword discovery. Use web_search instead.
+    This is slower and more resource-intensive than other tools. Only use when multi-source reasoning is needed."""
     url_list = [u.strip() for u in urls.split(",") if u.strip()] if urls else None
     parsed_schema: dict | None = json.loads(schema) if schema else None
 
-    result: AgentResponse = await client().agent(
+    result = await client().agent(
         urls=url_list,
         prompt=prompt,
         schema=parsed_schema,
